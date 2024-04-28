@@ -256,41 +256,75 @@
     //        return val;
     //    }
 
-    // Modify this method to handle full expression trees
-    private int parseExpr(String token) {
-        int val;
+// Top level call
+private int parseExpr(String token) {
+    return parseAddSub(token);
+}
 
-        if (token.equals("(")) {
-            token = getToken();
-            val = parseExpr(token); // <expr> ::= ( <expr> )
-            if (!getToken().equals(")"))
-                reportError(token);
-        } else if (token.equals("-")) {
-            token = getToken();
-            val = -parseExpr(token); // <expr> ::= - <expr>
-        } else {
-            val = parseVal(token);
-            token = getToken();
+// Function for + / -
+private int parseAddSub(String leftToken) {
+    String operToken, rightToken;
+    int val;
 
-            switch (token.charAt(0)) {
-                case '+':
-                    val = val + parseExpr(getToken()); // <expr> ::= <val> + <expr>
-                    break;
-                case '-':
-                    val = val - parseExpr(getToken()); // <expr> ::= <val> - <expr>
-                    break;
-                case '*':
-                    val = val * parseExpr(getToken()); // <expr> ::= <val> * <expr>
-                    break;
-                case '/':
-                    val = val / parseExpr(getToken()); // <expr> ::= <val> / <expr>
-                    break;
-                default: // oops, a unary expression
-                    line = token + line;
-            }
+    val = parseMultDiv(leftToken);
+
+    while (true) {
+        operToken = getToken();
+        switch (operToken.charAt(0)) {
+            case '+':
+                rightToken = getToken();
+                val = val + parseMultDiv(rightToken);
+                break;
+            case '-':
+                rightToken = getToken();
+                val = val - parseMultDiv(rightToken);
+                break;
+            default:
+                line = operToken + line; // put operator token back, not add or sub
+                return val;
         }
-        return val;
     }
+}
+
+// Function for * / 
+private int parseMultDiv(String leftToken) {
+    String operToken, rightToken;
+    int val;
+
+    val = parseParen(leftToken);
+
+    while (true) {
+        operToken = getToken();
+        switch (operToken.charAt(0)) {
+            case '*':
+                rightToken = getToken();
+                val = val * parseParen(rightToken);
+                break;
+            case '/':
+                rightToken = getToken();
+                val = val / parseParen(rightToken);
+                break;
+            default:
+                line = operToken + line; // put operator token back, not mult or div
+                return val;
+        }
+    }
+}
+
+// Function for parentheses
+private int parseParen(String token) {
+    int val;
+
+    if (token.equals("(")) {
+        token = getToken();
+        val = parseExpr(token); // <expr> ::= ( <expr> )
+        if (!getToken().equals(")"))
+            reportError(token);
+        return val;
+    } else {
+        return parseVal(token);
+    }
+}
 
 
         // parse <cond>
